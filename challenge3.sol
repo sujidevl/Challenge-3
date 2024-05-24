@@ -1,64 +1,53 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Here the overview of the challenge is to create  the contract in which owner only have the permission to mint the tokens to the given specific address
-// And other is any user should be able to burn and transfer tokens.
+contract TokenContract {
+    string public tokenName;
+    string public tokenSymbol;
+    uint256 public tokenTotalSupply;
+    mapping(address => uint256) public accountBalance;
+    address public contractOwner;
 
-// Here we are declaring the contract named as challenge and contain state variables as name,symbol,totalsupply
-contract challenge {
-    string public name;
-    string public symbol;
-    uint256 public totalSupply;
-    // Here we are mapping addresses to thier respective token adresses
-    mapping(address => uint256) public balanceOf;
-    // Declaring public address variable named owner which stores the adress of contract owner
-    address public owner;
-    // Here we are declaring events and they are used to log specific occurences within smart contract
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Burn(address indexed from, uint256 value);
-    event Mint(address indexed to, uint256 value);
+    event TransferEvent(address indexed from, address indexed to, uint256 amount);
+    event BurnEvent(address indexed from, uint256 amount);
+    event MintEvent(address indexed to, uint256 amount);
 
-    // Declaring a constructor function and takes two parameters name & symbol
-    constructor(string memory _name, string memory _symbol) {
-        name = _name;
-        symbol = _symbol;
-        totalSupply = 0;
-        owner = msg.sender;
+    constructor(string memory _tokenName, string memory _tokenSymbol) {
+        tokenName = _tokenName;
+        tokenSymbol = _tokenSymbol;
+        tokenTotalSupply = 0;
+        contractOwner = msg.sender;
     }
 
-    // Declaring a modifier named as onlyowner
-    modifier onlyOwner() {
+    modifier onlyContractOwner() {
         require(
-            msg.sender == owner,
+            msg.sender == contractOwner,
             "Only the contract owner can perform this action"
         );
         _;
     }
 
-    // Function for minting the tokens
-    function mint(address to, uint256 value) public onlyOwner {
-        balanceOf[to] += value;
-        totalSupply += value;
-        emit Mint(to, value);
-        emit Transfer(address(0), to, value);
+    function mintTokens(address to, uint256 amount) public onlyContractOwner {
+        accountBalance[to] += amount;
+        tokenTotalSupply += amount;
+        emit MintEvent(to, amount);
+        emit TransferEvent(address(0), to, amount);
     }
 
-    // Function for burning the tokens
-    function burn(uint256 value) public {
-        require(balanceOf[msg.sender] >= value, "Insufficient balance");
+    function burnTokens(uint256 amount) public {
+        require(accountBalance[msg.sender] >= amount, "Insufficient balance");
 
-        balanceOf[msg.sender] -= value;
-        totalSupply -= value;
-        emit Burn(msg.sender, value);
-        emit Transfer(msg.sender, address(0), value);
+        accountBalance[msg.sender] -= amount;
+        tokenTotalSupply -= amount;
+        emit BurnEvent(msg.sender, amount);
+        emit TransferEvent(msg.sender, address(0), amount);
     }
 
-    // function for transfering the tokens
-    function transfer(address to, uint256 value) public {
-        require(balanceOf[msg.sender] >= value, "Insufficient balance");
+    function transferTokens(address to, uint256 amount) public {
+        require(accountBalance[msg.sender] >= amount, "Insufficient balance");
 
-        balanceOf[msg.sender] -= value;
-        balanceOf[to] += value;
-        emit Transfer(msg.sender, to, value);
+        accountBalance[msg.sender] -= amount;
+        accountBalance[to] += amount;
+        emit TransferEvent(msg.sender, to, amount);
     }
 }
